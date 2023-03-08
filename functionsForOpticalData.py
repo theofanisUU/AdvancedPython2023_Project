@@ -15,10 +15,11 @@ def locateData():
     txtFileList=[]
     # filter for all the .txt files and store them
     for file in fileList:
-        if file.endswith(".txt"): txtFileList.append(file)
+        if file.endswith(".txt"):
+            txtFileList.append(file)
     return txtFileList
 txtFileList = locateData()    
-    
+
 
 def TryReadFirst():
     #check
@@ -44,8 +45,29 @@ def TryReadFirst():
 
 numberOfPointsInSpectrum,WavelegthsRef,IntensitiesRef = TryReadFirst()
 
-#first infp
-print(txtFileList)
-print(numberOfPointsInSpectrum)
-print(WavelegthsRef[:10])
-print(IntensitiesRef[:10])
+#Test Scan the more txt files
+def ScanFiles(): 
+    for txtFile in txtFileList: #For Each Spectrum
+        #print(f"reading {txtFile}")
+        arrWav = np.zeros(numberOfPointsInSpectrum,dtype=np.float64)
+        arrInt = np.zeros(numberOfPointsInSpectrum,dtype=np.float64)
+        arrIndex=0
+        file = open(txtFile, 'rt')
+        for line in file:  
+            #extract the data
+            
+            wavelength,intensity=line.rstrip('\n').split(";")
+            arrWav[arrIndex]= wavelength
+            arrInt[arrIndex]= intensity
+            arrIndex+=1
+    return  arrWav, arrInt 
+            
+arrWav, arrInt  =   ScanFiles()
+
+#read data from last  
+print(arrWav[100:105]) 
+print(arrInt[100:105])
+print()
+            
+            
+            
