@@ -1,2 +1,5 @@
 # import functionsForOpticalData
 
+#----Input----
+
+#----Functionality----

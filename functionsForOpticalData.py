@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 #----
 integrStartWav=630
 integrFinishWav=1000
+    
 
 #----Locating data----
 def locateData():
@@ -39,6 +40,9 @@ def TryReadFirst():
     
     WavelegthsRef,IntensitiesRef=[],[]
     try:
+        timeFirst = txtFileList[0].split("_")
+        timeFirst[0] = timeFirst[0][6:]
+        #--------------------
         file = open(txtFileList[0], 'rt')
         for myline in file:
             numberOfPointsInSpectrum+=1
@@ -51,9 +55,10 @@ def TryReadFirst():
     
     WavelegthsRef = np.array(WavelegthsRef)
     IntensitiesRef=np.array(IntensitiesRef)
-    return numberOfPointsInSpectrum,WavelegthsRef,IntensitiesRef
+    return numberOfPointsInSpectrum,timeFirst,WavelegthsRef,IntensitiesRef
 
-numberOfPointsInSpectrum,WavelegthsRef,IntensitiesRef = TryReadFirst()
+numberOfPointsInSpectrum,timeFirst,WavelegthsRef,IntensitiesRef = TryReadFirst()
+print(timeFirst[0:4])
 
 def wavToINdex(reqWav):
     searchIndex=0
@@ -68,15 +73,25 @@ def VisualizeFirst():
 # VisualizeFirst()    
 
 #----Extract all intensity data----
-def ScanFiles(integrStartWav,integrFinishWav): 
+def ScanFiles(integrStartWav,integrFinishWav,timeFirst):
+    #---------
     averArr=np.zeros(numberOfSpectra)
+    timeArr=np.zeros(numberOfSpectra)
     arrInt = np.zeros( (numberOfSpectra,numberOfPointsInSpectrum),dtype=np.float64)
+    
+    #--------
     specIndex=0
     firstIndex=wavToINdex(integrStartWav)
     lastIndex =wavToINdex(integrFinishWav)
 
     integrFinishWav=1000
     for txtFile in txtFileList: #For Each Spectrum
+        time = txtFile.split("_")
+        time[0] = time[0][6:]
+        #in Hours
+        timeSinceLaunch =24*(float(time[0])-float(timeFirst[0]))+ (float(time[1])-float(timeFirst[1]))+(float(time[2])-float(timeFirst[2]))/60 +(float(time[3])-float(timeFirst[3]))/3600
+        timeArr[specIndex]=timeSinceLaunch
+        #---------------------------------------
         arrIndex=0
         try:
             file = open(txtFile, 'rt')
@@ -94,8 +109,16 @@ def ScanFiles(integrStartWav,integrFinishWav):
         averArr[specIndex]= np.mean(arrInt[specIndex,firstIndex:lastIndex])
         specIndex+=1
     #end for (files)
-    return  arrInt,averArr
+    return  arrInt,averArr,timeArr
             
-arrInt,averArr  =   ScanFiles(integrStartWav,integrFinishWav)
+arrInt,averArr,timeArr =  ScanFiles(integrStartWav,integrFinishWav,timeFirst)
 
+#-------------------------------------
+def plotAverageOverTime(timeArr,averArr):
+    fig2,ax2=plt.subplots()
+    ax2.set_xlabel("time (h)");ax2.set_ylabel('Average Intensity')
+    plt.plot(timeArr,averArr,ms=0.5)
+
+print(timeArr)
 print(averArr)
+plotAverageOverTime(timeArr,averArr) #seems reasonable
