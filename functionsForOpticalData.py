@@ -4,6 +4,9 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
+#----
+integrStartWav=630
+integrFinishWav=1000
 
 #----Locating data----
 def locateData():
@@ -52,18 +55,27 @@ def TryReadFirst():
 
 numberOfPointsInSpectrum,WavelegthsRef,IntensitiesRef = TryReadFirst()
 
+def wavToINdex(reqWav):
+    searchIndex=0
+    while(WavelegthsRef[searchIndex]<reqWav): searchIndex+=1
+    return searchIndex
 #Visualize the first Spectrum
 def VisualizeFirst():
     fig,ax=plt.subplots()
     ax.set_xlabel("Wavelength (nm)");ax.set_ylabel('Intensity')
     plt.plot(WavelegthsRef,IntensitiesRef,ms=0.5)
 
-VisualizeFirst()    
+# VisualizeFirst()    
 
 #----Extract all intensity data----
-def ScanFiles(): 
+def ScanFiles(integrStartWav,integrFinishWav): 
+    averArr=np.zeros(numberOfSpectra)
     arrInt = np.zeros( (numberOfSpectra,numberOfPointsInSpectrum),dtype=np.float64)
     specIndex=0
+    firstIndex=wavToINdex(integrStartWav)
+    lastIndex =wavToINdex(integrFinishWav)
+
+    integrFinishWav=1000
     for txtFile in txtFileList: #For Each Spectrum
         arrIndex=0
         try:
@@ -74,10 +86,16 @@ def ScanFiles():
                 arrInt[specIndex,arrIndex]= intensity
                 arrIndex+=1
             #end for (lines)
-            specIndex+=1
-        finally:
-            file.close()   
-    #end for (files)
-    return  arrInt 
             
-arrInt  =   ScanFiles()
+        finally:
+            file.close()
+            
+        #get the average intensity 
+        averArr[specIndex]= np.mean(arrInt[specIndex,firstIndex:lastIndex])
+        specIndex+=1
+    #end for (files)
+    return  arrInt,averArr
+            
+arrInt,averArr  =   ScanFiles(integrStartWav,integrFinishWav)
+
+print(averArr)
