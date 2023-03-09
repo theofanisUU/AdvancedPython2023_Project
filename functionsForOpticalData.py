@@ -4,23 +4,28 @@ import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
+
+#----Locating data----
 def locateData():
     # locating input directory
     cwd = os.getcwd()
     targDir = os.chdir(cwd+"/Inputs")
     
     #extracting files
-    fileList = os.listdir(targDir) #List ALL the files in the working directory 
-
+    fileList = os.listdir(targDir) #List ALL the files in working directory
+    
     txtFileList=[]
+    numberOfSpectra=0
     # filter for all the .txt files and store them
     for file in fileList:
         if file.endswith(".txt"):
             txtFileList.append(file)
-    return txtFileList
-txtFileList = locateData()    
+            numberOfSpectra+=1
+    return numberOfSpectra,txtFileList
 
+numberOfSpectra,txtFileList = locateData()    
 
+#---- Extracting first data----
 def TryReadFirst():
     #check
     if(len(txtFileList)==0):
@@ -45,29 +50,29 @@ def TryReadFirst():
 
 numberOfPointsInSpectrum,WavelegthsRef,IntensitiesRef = TryReadFirst()
 
-#Test Scan the more txt files
+#----Extract all intensity data----
 def ScanFiles(): 
+    arrInt = np.zeros( (numberOfSpectra,numberOfPointsInSpectrum),dtype=np.float64)
+    specIndex=0
     for txtFile in txtFileList: #For Each Spectrum
-        #print(f"reading {txtFile}")
-        arrWav = np.zeros(numberOfPointsInSpectrum,dtype=np.float64)
-        arrInt = np.zeros(numberOfPointsInSpectrum,dtype=np.float64)
         arrIndex=0
         file = open(txtFile, 'rt')
         for line in file:  
             #extract the data
-            
             wavelength,intensity=line.rstrip('\n').split(";")
-            arrWav[arrIndex]= wavelength
-            arrInt[arrIndex]= intensity
+            arrInt[specIndex,arrIndex]= intensity
             arrIndex+=1
-    return  arrWav, arrInt 
+        #end for
+        specIndex+=1
+    #end for
+    return  arrInt 
             
-arrWav, arrInt  =   ScanFiles()
+arrInt  =   ScanFiles()
 
-#read data from last  
-print(arrWav[100:105]) 
-print(arrInt[100:105])
-print()
+#checking some data to verify that everything was read correctly
+print(arrInt);print()
+print(arrInt[0,2300:2305]);print()
+print(arrInt[:,0])
             
             
             
