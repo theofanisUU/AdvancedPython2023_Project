@@ -1,6 +1,5 @@
 #----Imports------------------
 import os
-import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -27,70 +26,76 @@ def locateData():
             numberOfSpectra+=1
     return numberOfSpectra,txtFileList
 
-numberOfSpectra,txtFileList = locateData()    
 
 #---- Extracting first data----
-def TryReadFirst():
-    #check
+def TryReadFirstDataset(txtFileList):
+    #check if files were found
     if(len(txtFileList)==0):
         print("no txt files found!")
         return False
     
+    #keep track of spectra
     numberOfPointsInSpectrum=0
     
-    WavelegthsRef,IntensitiesRef=[],[]
+    #Waveleghts column is assumed the same in all files from the same experiment
+    Wavelegths,IntensitiesRef=[],[]
     try:
-        timeFirst = txtFileList[0].split("_")
-        timeFirst[0] = timeFirst[0][6:]
+        #record launch time from first spectrum file name
+        launchTime = txtFileList[0].split("_")
+        launchTime[0] = launchTime[0][6:]
         #--------------------
         file = open(txtFileList[0], 'rt')
         for myline in file:
             numberOfPointsInSpectrum+=1
             #txt has a specific format with 2 columns seperated by ;
             wavelegth,intensity=myline.rstrip('\n').split(";")
-            WavelegthsRef.append( float(wavelegth))
+            Wavelegths.append( float(wavelegth))
             IntensitiesRef.append( float(intensity))
     finally:
         file.close()
     
-    WavelegthsRef = np.array(WavelegthsRef)
+    Wavelegths = np.array(Wavelegths)
     IntensitiesRef=np.array(IntensitiesRef)
-    return numberOfPointsInSpectrum,timeFirst,WavelegthsRef,IntensitiesRef
+    return launchTime,numberOfPointsInSpectrum,Wavelegths,IntensitiesRef
 
-numberOfPointsInSpectrum,timeFirst,WavelegthsRef,IntensitiesRef = TryReadFirst()
-print(timeFirst[0:4])
+# print(timeFirst[0:4])
 
-def wavToINdex(reqWav):
+def wavelengthToIndex(reqWav):
     searchIndex=0
-    while(WavelegthsRef[searchIndex]<reqWav): searchIndex+=1
+    while(Wavelegths[searchIndex]<reqWav): searchIndex+=1
     return searchIndex
+
 #Visualize the first Spectrum
-def VisualizeFirst():
+def VisualizeFirst(Wavelegths):
     fig,ax=plt.subplots()
     ax.set_xlabel("Wavelength (nm)");ax.set_ylabel('Intensity')
-    plt.plot(WavelegthsRef,IntensitiesRef,ms=0.5)
+    plt.plot(Wavelegths,IntensitiesRef,ms=0.5)
 
-# VisualizeFirst()    
+# VisualizeFirst(Wavelegths)    
+
+def calculateTimeSinceLaunch(launchTime,time):
+    return 24*(float(time[0])-float(launchTime[0]))+ (float(time[1])-float(launchTime[1]))+(float(time[2])-float(launchTime[2]))/60 +(float(time[3])-float(launchTime[3]))/3600
+    
 
 #----Extract all intensity data----
 def ScanFiles(integrStartWav,integrFinishWav,timeFirst):
-    #---------
-    averArr=np.zeros(numberOfSpectra)
-    timeArr=np.zeros(numberOfSpectra)
-    arrInt = np.zeros( (numberOfSpectra,numberOfPointsInSpectrum),dtype=np.float64)
+    #-allocate memory to store the data
+    timesFromLaunchInHours=np.zeros(numberOfSpectra)
+    intensities = np.zeros( (numberOfSpectra,numberOfPointsInSpectrum),dtype=np.float64)
+    averageIntensities    =np.zeros(numberOfSpectra)
     
     #--------
     specIndex=0
-    firstIndex=wavToINdex(integrStartWav)
-    lastIndex =wavToINdex(integrFinishWav)
+    firstIndex=wavelengthToIndex(integrStartWav)
+    lastIndex =wavelengthToIndex(integrFinishWav)
 
     integrFinishWav=1000
     for txtFile in txtFileList: #For Each Spectrum
+        #get time from filenames    
         time = txtFile.split("_")
         time[0] = time[0][6:]
-        #in Hours
-        timeSinceLaunch =24*(float(time[0])-float(timeFirst[0]))+ (float(time[1])-float(timeFirst[1]))+(float(time[2])-float(timeFirst[2]))/60 +(float(time[3])-float(timeFirst[3]))/3600
-        timeArr[specIndex]=timeSinceLaunch
+        #time calculation 
+        timesFromLaunchInHours[specIndex]=calculateTimeSinceLaunch(timeFirst,time)
         #---------------------------------------
         arrIndex=0
         try:
@@ -98,7 +103,7 @@ def ScanFiles(integrStartWav,integrFinishWav,timeFirst):
             for line in file:  
                 #extract the data
                 wavelength,intensity=line.rstrip('\n').split(";")
-                arrInt[specIndex,arrIndex]= intensity
+                intensities[specIndex,arrIndex]= intensity
                 arrIndex+=1
             #end for (lines)
             
@@ -106,12 +111,11 @@ def ScanFiles(integrStartWav,integrFinishWav,timeFirst):
             file.close()
             
         #get the average intensity 
-        averArr[specIndex]= np.mean(arrInt[specIndex,firstIndex:lastIndex])
+        averageIntensities[specIndex]= np.mean(intensities[specIndex,firstIndex:lastIndex])
         specIndex+=1
     #end for (files)
-    return  arrInt,averArr,timeArr
+    return  timesFromLaunchInHours,intensities,averageIntensities
             
-arrInt,averArr,timeArr =  ScanFiles(integrStartWav,integrFinishWav,timeFirst)
 
 #-------------------------------------
 def plotAverageOverTime(timeArr,averArr):
@@ -119,6 +123,10 @@ def plotAverageOverTime(timeArr,averArr):
     ax2.set_xlabel("time (h)");ax2.set_ylabel('Average Intensity')
     plt.plot(timeArr,averArr,ms=0.5)
 
-print(timeArr)
-print(averArr)
-plotAverageOverTime(timeArr,averArr) #seems reasonable
+
+#-----running-----
+numberOfSpectra,txtFileList = locateData()    
+launchTime,numberOfPointsInSpectrum,Wavelegths,IntensitiesRef = TryReadFirstDataset(txtFileList)
+timesFromLaunchInHours,intensities,averageIntensities =  ScanFiles(integrStartWav,integrFinishWav,launchTime)
+plotAverageOverTime(timesFromLaunchInHours,averageIntensities) 
+#seems reasonable
