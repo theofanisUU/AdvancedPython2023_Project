@@ -3,11 +3,6 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
-#----
-integrStartWav=630
-integrFinishWav=1000
-    
-
 #----Locating data----
 def locateData():
     # locating input directory
@@ -17,14 +12,14 @@ def locateData():
     #extracting files
     fileList = os.listdir(targDir) #List ALL the files in working directory
     
-    txtFileList=[]
+    spectrumDataList=[]
     numberOfSpectra=0
     # filter for all the .txt files and store them
     for file in fileList:
         if file.endswith(".txt"):
-            txtFileList.append(file)
+            spectrumDataList.append(file)
             numberOfSpectra+=1
-    return numberOfSpectra,txtFileList
+    return numberOfSpectra,spectrumDataList
 
 
 #---- Extracting first data----
@@ -60,16 +55,16 @@ def TryReadFirstDataset(txtFileList):
 
 # print(timeFirst[0:4])
 
-def wavelengthToIndex(reqWav):
+def wavelengthToIndex(reqWav,Wavelengths):
     searchIndex=0
-    while(Wavelegths[searchIndex]<reqWav): searchIndex+=1
+    while(Wavelengths[searchIndex]<reqWav): searchIndex+=1
     return searchIndex
 
 #Visualize the first Spectrum
-def VisualizeFirst(Wavelegths):
+def VisualizeFirst(Wavelengths,IntensitiesRef):
     fig,ax=plt.subplots()
     ax.set_xlabel("Wavelength (nm)");ax.set_ylabel('Intensity')
-    plt.plot(Wavelegths,IntensitiesRef,ms=0.5)
+    plt.plot(Wavelengths,IntensitiesRef,ms=0.5)
 
 # VisualizeFirst(Wavelegths)    
 
@@ -78,16 +73,23 @@ def calculateTimeSinceLaunch(launchTime,time):
     
 
 #----Extract all intensity data----
-def ScanFiles(integrStartWav,integrFinishWav,timeFirst):
+def ScanFiles(txtFileList,numberOfSpectra,numberOfPointsInSpectrum,launchTime,Wavelengths,integrStartWav,integrFinishWav,selectedWavelengths):
+    
+    
     #-allocate memory to store the data
     timesFromLaunchInHours=np.zeros(numberOfSpectra)
     intensities = np.zeros( (numberOfSpectra,numberOfPointsInSpectrum),dtype=np.float64)
     averageIntensities    =np.zeros(numberOfSpectra)
     
-    #--------
+    #-find useful indices
     specIndex=0
-    firstIndex=wavelengthToIndex(integrStartWav)
-    lastIndex =wavelengthToIndex(integrFinishWav)
+    firstIndex=wavelengthToIndex(integrStartWav,Wavelengths)
+    lastIndex =wavelengthToIndex(integrFinishWav,Wavelengths)
+    selectedIndices=[]
+    for selectedWav in selectedWavelengths:
+        selectedIndices.append(wavelengthToIndex(selectedWav,Wavelengths))
+    print(selectedIndices,firstIndex,lastIndex)
+        
 
     integrFinishWav=1000
     for txtFile in txtFileList: #For Each Spectrum
@@ -95,7 +97,7 @@ def ScanFiles(integrStartWav,integrFinishWav,timeFirst):
         time = txtFile.split("_")
         time[0] = time[0][6:]
         #time calculation 
-        timesFromLaunchInHours[specIndex]=calculateTimeSinceLaunch(timeFirst,time)
+        timesFromLaunchInHours[specIndex]=calculateTimeSinceLaunch(launchTime,time)
         #---------------------------------------
         arrIndex=0
         try:
@@ -122,11 +124,18 @@ def plotAverageOverTime(timeArr,averArr):
     fig2,ax2=plt.subplots()
     ax2.set_xlabel("time (h)");ax2.set_ylabel('Average Intensity')
     plt.plot(timeArr,averArr,ms=0.5)
-
-
-#-----running-----
-numberOfSpectra,txtFileList = locateData()    
-launchTime,numberOfPointsInSpectrum,Wavelegths,IntensitiesRef = TryReadFirstDataset(txtFileList)
-timesFromLaunchInHours,intensities,averageIntensities =  ScanFiles(integrStartWav,integrFinishWav,launchTime)
-plotAverageOverTime(timesFromLaunchInHours,averageIntensities) 
-#seems reasonable
+    plt.show()
+    
+#----------------------------------------
+def getSelectedWavelengthsAtTimeStamp(requestedElapsedTime,timesFromLaunchInHours,selectedWavelengths,wavelengths,intensities):
+    #locating (by index) the spectrum with time closest to the requested time
+    timeIndex=0
+    while(timesFromLaunchInHours[timeIndex]<requestedElapsedTime): 
+        timeIndex+=1
+    #return the intensities of the selected Wavelengths for this spectrum
+    selectedIntensities=[]
+    for selectedWavelength in selectedWavelengths:
+        selectedIntensity = intensities[timeIndex,wavelengthToIndex(selectedWavelength,wavelengths)]
+        selectedIntensities.append(selectedIntensity)
+    #endFor
+    return selectedIntensities

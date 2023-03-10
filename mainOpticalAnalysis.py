@@ -4,14 +4,18 @@ import functionsForOpticalData as func
 integrStartWav=630
 integrFinishWav=1000
 
+selectedWavelengths=[600,700,800,900,1000]
+
+unloadedTime=0.1
 
 #----Functionality----
-numberOfSpectra,txtFileList = func.locateData()    
-launchTime,numberOfPointsInSpectrum,Wavelengths,IntensitiesRef = \
-    func.TryReadFirstDataset(txtFileList)
+numberOfSpectra,spectrumDataList = func.locateData()    
+launchTime,numberOfPointsInSpectrum,wavelengths,IntensitiesRef = \
+    func.TryReadFirstDataset(spectrumDataList)
 timesFromLaunchInHours,intensities,averageIntensities = \
-    func.ScanFiles(txtFileList,numberOfSpectra,numberOfPointsInSpectrum,launchTime,Wavelengths,integrStartWav,integrFinishWav)
+    func.ScanFiles(spectrumDataList,numberOfSpectra,numberOfPointsInSpectrum,launchTime,wavelengths,integrStartWav,integrFinishWav,selectedWavelengths)
 
-func.TryReadFirstDataset(txtFileList)
+
 func.plotAverageOverTime(timesFromLaunchInHours,averageIntensities)
-print("allok") 
+selectedIntensities = func.getSelectedWavelengthsAtTimeStamp(unloadedTime,timesFromLaunchInHours,selectedWavelengths,wavelengths,intensities)
+print(selectedIntensities)
