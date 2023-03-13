@@ -19,13 +19,13 @@ selectedWavelengths=[600,700,800,900,1000]
 #      within 0.5nm
 
 #Optional: Choose whether to plot the first spectrum
-plotFirstSpectrum=False
+plotFirstSpectrum=True
 
 #Optional: Choose timestamps to compare intensities on selected wavelengths
 #Functionality aimed on comparing thin films before and after H2 loading
+compareTimestamps=True
 unloadedTimeStamp=1
 loadedTimeStamp  =8.5
-
 
 
 #----Functionality Section----
@@ -34,21 +34,22 @@ loadedTimeStamp  =8.5
 
 #locating the .txt spectrum files in subDir ~/InputData
 txtFilesFoundSuccessfully,numberOfSpectra,spectrumDataList = functs.locateData()
-if(txtFilesFoundSuccessfully==False): sys.exit() #if no data found stop operations
+if(not txtFilesFoundSuccessfully): sys.exit() #if no data found stop operations
 
 #extract key info from the first spectum 
 launchTime,numberOfPointsInSpectrum,wavelengths,IntensitiesRef = \
     functs.TryReadFirstDataset(spectrumDataList)
     
-#extract intensity values for all wavelengths 
+#extract intensity values for all wavelengths from all of exper spectra
 timesFromLaunchInHours,intensities,averageIntensities = \
     functs.ScanFiles(spectrumDataList,numberOfSpectra,numberOfPointsInSpectrum,launchTime,wavelengths,integrStartWav,integrFinishWav,selectedWavelengths)
+
+#Plot average intesity vs time since launch of experiment
+functs.plotAverageIntensityOverTime(timesFromLaunchInHours,averageIntensities,integrStartWav,integrFinishWav)
 
 #Optional: Plot Intensity vs Wavelength for the first "reference" spectrum
 if(plotFirstSpectrum): functs.PlotFirstSpectrum(wavelengths,IntensitiesRef)
 
-
-functs.plotAverageIntensityOverTime(timesFromLaunchInHours,averageIntensities)
-selectedIntensities = functs.getSelectedWavelengthsAtTimeStamp(0.1,timesFromLaunchInHours,selectedWavelengths,wavelengths,intensities)
-
-functs.printUnloadedVsLoadedComparison(unloadedTimeStamp,loadedTimeStamp,timesFromLaunchInHours,selectedWavelengths,wavelengths,intensities)
+#Optional: 
+if(compareTimestamps):    
+    functs.printUnloadedVsLoadedComparison(unloadedTimeStamp,loadedTimeStamp,timesFromLaunchInHours,selectedWavelengths,wavelengths,intensities)
