@@ -21,7 +21,10 @@ selectedWavelengths=[600,700,800,900,1000]
 #Optional: Choose whether to plot the first spectrum
 plotFirstSpectrum=False
 
-unloadedTime=0.1
+#Optional: Choose timestamps to compare intensities on selected wavelengths
+#Functionality aimed on comparing thin films before and after H2 loading
+unloadedTimeStamp=1
+loadedTimeStamp  =8.5
 
 
 
@@ -41,10 +44,11 @@ launchTime,numberOfPointsInSpectrum,wavelengths,IntensitiesRef = \
 timesFromLaunchInHours,intensities,averageIntensities = \
     functs.ScanFiles(spectrumDataList,numberOfSpectra,numberOfPointsInSpectrum,launchTime,wavelengths,integrStartWav,integrFinishWav,selectedWavelengths)
 
-
-if(plotFirstSpectrum): functs.PlotFirstSpectrum()
+#Optional: Plot Intensity vs Wavelength for the first "reference" spectrum
+if(plotFirstSpectrum): functs.PlotFirstSpectrum(wavelengths,IntensitiesRef)
 
 
 functs.plotAverageIntensityOverTime(timesFromLaunchInHours,averageIntensities)
-selectedIntensities = functs.getSelectedWavelengthsAtTimeStamp(unloadedTime,timesFromLaunchInHours,selectedWavelengths,wavelengths,intensities)
-print(selectedIntensities)
+selectedIntensities = functs.getSelectedWavelengthsAtTimeStamp(0.1,timesFromLaunchInHours,selectedWavelengths,wavelengths,intensities)
+
+functs.printUnloadedVsLoadedComparison(unloadedTimeStamp,loadedTimeStamp,timesFromLaunchInHours,selectedWavelengths,wavelengths,intensities)

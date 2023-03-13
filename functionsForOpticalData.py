@@ -202,7 +202,7 @@ def plotAverageIntensityOverTime(timesFromLaunchInHours,averageIntensities):
     """
     fig2,ax2=plt.subplots()
     ax2.set_xlabel("time (h)");ax2.set_ylabel('Average Intensity')
-    plt.plot(timesFromLaunchInHours,averageIntensities,ms=0.5)
+    ax2.scatter(timesFromLaunchInHours,averageIntensities,s=1)
     plt.show()
     
 #----------------------------------------
@@ -218,3 +218,13 @@ def getSelectedWavelengthsAtTimeStamp(requestedElapsedTime,timesFromLaunchInHour
         selectedIntensities.append(selectedIntensity)
     #endFor
     return selectedIntensities
+
+def printUnloadedVsLoadedComparison(unloadedTimeStamp,loadedTimeStamp,timesFromLaunchInHours,selectedWavelengths,wavelengths,intensities):
+    unloadedSelectedIntensities = getSelectedWavelengthsAtTimeStamp(unloadedTimeStamp,timesFromLaunchInHours,selectedWavelengths,wavelengths,intensities)
+    loadedSelectedIntensities   = getSelectedWavelengthsAtTimeStamp(  loadedTimeStamp,timesFromLaunchInHours,selectedWavelengths,wavelengths,intensities)
+    print()
+    print(f"Unloaded VS Loaded Sample for Selected Wavelengths")
+    for i in range(len(unloadedSelectedIntensities)):
+        ratio = loadedSelectedIntensities[i]/unloadedSelectedIntensities[i]
+        lnRatio= -np.log(loadedSelectedIntensities[i]/unloadedSelectedIntensities[i])
+        print(f"wv: {selectedWavelengths[i]} nm: L/UnL: {ratio  } -ln(I(c)/Io) = { lnRatio }")
