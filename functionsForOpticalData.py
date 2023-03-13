@@ -5,9 +5,22 @@ import matplotlib.pyplot as plt
 
 #----Locating data----
 def locateData():
+    """
+    Function to auto-locate the data from the /InputData subDir
+    The data are expected in .txt format with 2 columns seperated by ";"
+
+    Returns
+    -------
+    numberOfSpectra : int
+        NUmber of txt files found in subDir.
+    spectrumDataList : list
+        A list with the filePaths of all txt data found.
+    txtFilesFoundSuccessfully: bool
+        Returns True if .txt spectrum files were found and False if nothing was found
+    """
     # locating input directory
     cwd = os.getcwd()
-    targDir = os.chdir(cwd+"/Inputs")
+    targDir = os.chdir(cwd+"/InputData") #change to the directory with the files for calcs
     
     #extracting files
     fileList = os.listdir(targDir) #List ALL the files in working directory
@@ -19,15 +32,41 @@ def locateData():
         if file.endswith(".txt"):
             spectrumDataList.append(file)
             numberOfSpectra+=1
-    return numberOfSpectra,spectrumDataList
+    
+    #check if files were actually found
+    txtFilesFoundSuccessfully=True
+    if(len(spectrumDataList)==0):
+        print("\nERROR:")
+        print("No txt files with experimental data found!")
+        print("Make sure your .txt spectra are located in subDir ~/InputData")
+        txtFilesFoundSuccessfully=False
+    return txtFilesFoundSuccessfully,numberOfSpectra,spectrumDataList
 
 
 #---- Extracting first data----
 def TryReadFirstDataset(txtFileList):
-    #check if files were found
-    if(len(txtFileList)==0):
-        print("no txt files found!")
-        return False
+    """
+    Parameters
+    ----------
+    txtFileList : list
+        List containing the filenames of the txt data found.
+
+    Returns
+    -------
+    launchTime : list
+        Contains the day,hour,minute and second of the first spectrum recorded.
+        
+    numberOfPointsInSpectrum : int
+        The number of rows in each spectrum .txt file.
+        
+    Wavelegths : numpy.ndarray
+        Contains values from 1st column in spectrum .txt files, 
+        that corresponds to the wavelengths recorded by the optical sensor.
+        
+    IntensitiesRef : numpy.ndarray
+        Contains values from 2nd column in the first "reference" spectrum .txt file, 
+        that corresponds to the intensity recorded by the optical sensor.
+    """
     
     #keep track of spectra
     numberOfPointsInSpectrum=0
@@ -56,19 +95,46 @@ def TryReadFirstDataset(txtFileList):
 # print(timeFirst[0:4])
 
 def wavelengthToIndex(reqWav,Wavelengths):
+    """
+    To be used by the functions module
+    DO NOT CALL
+    """
     searchIndex=0
     while(Wavelengths[searchIndex]<reqWav): searchIndex+=1
     return searchIndex
 
 #Visualize the first Spectrum
-def VisualizeFirst(Wavelengths,IntensitiesRef):
+def PlotFirstSpectrum(Wavelengths,IntensitiesRef):
+    """
+    Plots the Intestity vs Wavelength in the first spectrum recorded
+    
+    Parameters
+    ----------
+    Wavelegths : numpy.ndarray
+        Contains values from 1st column in spectrum .txt files, 
+        that corresponds to the wavelengths recorded by the optical sensor.
+        
+    IntensitiesRef : numpy.ndarray
+        Contains values from 2nd column in the first "reference" spectrum .txt file, 
+        that corresponds to the intensity recorded by the optical sensor.
+
+    Returns
+    -------
+    None.
+
+    """
     fig,ax=plt.subplots()
+    ax.set_title("First Optical Spectrum")
     ax.set_xlabel("Wavelength (nm)");ax.set_ylabel('Intensity')
     plt.plot(Wavelengths,IntensitiesRef,ms=0.5)
 
-# VisualizeFirst(Wavelegths)    
-
+ 
+#Function assisting time-related calculations (Not to be called by the user)
 def calculateTimeSinceLaunch(launchTime,time):
+    """
+    To be used by the functions module
+    DO NOT CALL
+    """
     return 24*(float(time[0])-float(launchTime[0]))+ (float(time[1])-float(launchTime[1]))+(float(time[2])-float(launchTime[2]))/60 +(float(time[3])-float(launchTime[3]))/3600
     
 
@@ -120,10 +186,23 @@ def ScanFiles(txtFileList,numberOfSpectra,numberOfPointsInSpectrum,launchTime,Wa
             
 
 #-------------------------------------
-def plotAverageOverTime(timeArr,averArr):
+def plotAverageIntensityOverTime(timesFromLaunchInHours,averageIntensities):
+    """
+    Parameters
+    ----------
+    timesFromLaunchInHours : numpy.ndarray
+        Contains the time passed since launch for each spectrum.
+    averageIntensities : numpy.ndarray
+        Contains the intesity averaged in ROI for each spectrum .
+
+    Returns
+    -------
+    None.
+
+    """
     fig2,ax2=plt.subplots()
     ax2.set_xlabel("time (h)");ax2.set_ylabel('Average Intensity')
-    plt.plot(timeArr,averArr,ms=0.5)
+    plt.plot(timesFromLaunchInHours,averageIntensities,ms=0.5)
     plt.show()
     
 #----------------------------------------
