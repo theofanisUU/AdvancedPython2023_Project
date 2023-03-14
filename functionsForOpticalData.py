@@ -1,8 +1,9 @@
-#----Imports------------------
+#======Imports========
 import os
 import numpy as np
 import matplotlib.pyplot as plt
 
+#======Functions========
 #----Locating Experimental Data----
 def locateData():
     """
@@ -13,8 +14,10 @@ def locateData():
     -------
     numberOfSpectra : int
         Number of txt files found in subDir.
+        
     spectrumDataList : list
         A list with the filePaths of all txt data found.
+        
     txtFilesFoundSuccessfully: bool
         Returns True if .txt spectrum files were found and False if nothing was found
     """
@@ -42,6 +45,7 @@ def locateData():
         print("Make sure your .txt spectra are located in subDir ~/InputData")
         txtFilesFoundSuccessfully=False
     return txtFilesFoundSuccessfully,numberOfSpectra,spectrumDataList
+#end function
 
 
 #---- Extracting data from first spectrum to act as a reference----
@@ -95,8 +99,7 @@ def TryReadFirstDataset(txtFileList):
     Wavelegths = np.array(Wavelegths)
     IntensitiesRef=np.array(IntensitiesRef)
     return launchTime,numberOfPointsInSpectrum,Wavelegths,IntensitiesRef
-
-# print(timeFirst[0:4])
+#end function
 
 def wavelengthToIndex(reqWav,Wavelengths):
     """
@@ -106,6 +109,7 @@ def wavelengthToIndex(reqWav,Wavelengths):
     searchIndex=0
     while(Wavelengths[searchIndex]<reqWav): searchIndex+=1
     return searchIndex
+#end function
 
 #Visualize the first Spectrum
 def PlotFirstSpectrum(Wavelengths,IntensitiesRef):
@@ -131,6 +135,7 @@ def PlotFirstSpectrum(Wavelengths,IntensitiesRef):
     ax.set_title("First Optical Spectrum")
     ax.set_xlabel("Wavelength (nm)");ax.set_ylabel('Intensity')
     plt.plot(Wavelengths,IntensitiesRef,ms=0.5)
+#end function
 
  
 #Function assisting time-related calculations (Not to be called by the user)
@@ -140,6 +145,7 @@ def calculateTimeSinceLaunch(launchTime,time):
     DO NOT CALL
     """
     return 24*(float(time[0])-float(launchTime[0]))+ (float(time[1])-float(launchTime[1]))+(float(time[2])-float(launchTime[2]))/60 +(float(time[3])-float(launchTime[3]))/3600
+#end function
     
 
 #----Extract all intensity data----
@@ -228,9 +234,9 @@ def ScanFiles(txtFileList,numberOfSpectra,numberOfPointsInSpectrum,launchTime,Wa
         
         if(specIndex%50 == 0):print(f"{specIndex}/{len(txtFileList)} files scanned")
     #end for (files)
-    print(f"all txt files scanned")
-    return  timesFromLaunchInHours,intensities,averageIntensities
-            
+    print(f"all txt files scanned",end="\n\n")
+    return  timesFromLaunchInHours,intensities,averageIntensities            
+#end function
 
 #-------------------------------------
 def plotAverageIntensityOverTime(timesFromLaunchInHours,averageIntensities,integrStartWav,integrFinishWav):
@@ -251,12 +257,13 @@ def plotAverageIntensityOverTime(timesFromLaunchInHours,averageIntensities,integ
     ax2.set_xlabel("time (h)");ax2.set_ylabel('Average Intensity')
     ax2.scatter(timesFromLaunchInHours,averageIntensities,s=1,label=f"ROI:{integrStartWav}-{integrFinishWav} nm")
     ax2.legend()
-    plt.show()
-    
+    plt.show()    
+#end function
+
 #----------------------------------------
 def getSelectedWavelengthsAtTimeStamp(requestedElapsedTime,timesFromLaunchInHours,selectedWavelengths,wavelengths,intensities):
     """
-    To be used by the functions module
+    To be used internally in the functions module
     DO NOT CALL
     """
     #locating (by index) the spectrum with time closest to the requested time
@@ -270,37 +277,12 @@ def getSelectedWavelengthsAtTimeStamp(requestedElapsedTime,timesFromLaunchInHour
         selectedIntensities.append(selectedIntensity)
     #endFor
     return selectedIntensities
+#end function
 
 def printUnloadedVsLoadedComparison(unloadedTimeStamp,loadedTimeStamp,timesFromLaunchInHours,selectedWavelengths,wavelengths,intensities):
     """
-
-    Parameters
-    ----------
-    unloadedTimeStamp : float
-        TimeStamp corresponding to the sample before it is loaded with H2.
-    
-    loadedTimeStamp : float
-        TimeStamp corresponding to the sample before it is loaded with H2.
-    
-    timesFromLaunchInHours : numpy.ndarray
-        Contains the time (in hours) passed since launch for each spectrum.
-    
-    selectedWavelengths : list
-        Contains wavelengths of interest.
-    
-    wavelengths : 
-        Contains values from 1st column in spectrum .txt files, 
-        that corresponds to the wavelengths recorded by the optical sensor.
-    
-    intensities : numpy.ndarray (2D)
-        Contains values from 2nd column in the EVERY spectrum .txt file, 
-        that corresponds to the intensity recorded by the optical sensor.
-        Each Row is one spectrum
-
-    Returns
-    -------
-    None.
-
+    DEPRECATED
+    DO NOT USE
     """
     unloadedSelectedIntensities = getSelectedWavelengthsAtTimeStamp(unloadedTimeStamp,timesFromLaunchInHours,selectedWavelengths,wavelengths,intensities)
     loadedSelectedIntensities   = getSelectedWavelengthsAtTimeStamp(  loadedTimeStamp,timesFromLaunchInHours,selectedWavelengths,wavelengths,intensities)
@@ -310,3 +292,99 @@ def printUnloadedVsLoadedComparison(unloadedTimeStamp,loadedTimeStamp,timesFromL
         ratio = loadedSelectedIntensities[i]/unloadedSelectedIntensities[i]
         lnRatio= -np.log(loadedSelectedIntensities[i]/unloadedSelectedIntensities[i])
         print(f"wv: {selectedWavelengths[i]} nm: L/UnL: {ratio  } -ln(I(c)/Io) = { lnRatio }")
+#end function
+
+#-----------------------------------------------------------------------------
+def GetIntensitiesAtTimestamp(requestedElapsedTime,timesFromLaunchInHours,intensities,spectrumDataList):
+    """
+    To be used internally in the functions module
+    DO NOT CALL
+    """
+    #locating (by index) the spectrum with time closest to the requested time
+    timeIndex=0
+    while(timesFromLaunchInHours[timeIndex]<requestedElapsedTime): 
+        timeIndex+=1
+    print(f"Requested timeStamp {requestedElapsedTime} h,  file found: {spectrumDataList[timeIndex]} ")
+    return intensities[timeIndex,:]
+#end function-----------------------------------------------------------------
+
+
+def GetStatisticsNearSelectedWavelengths(wavelengths,intensitiesSpec,selectedWavelengths):
+    """
+    To be used internally in the functions module
+    DO NOT CALL
+    """
+    offset=10
+    meanIntensities=[]
+    stdsIntensities=[]
+    print("Intensity statistics near the selected wavelegths for this timestamp:")
+    for selectedWavelength in selectedWavelengths:
+        #find the indices corresponding to wavls near the selected ones
+        startIndex  = wavelengthToIndex(selectedWavelength, wavelengths) - offset
+        finishIndex = wavelengthToIndex(selectedWavelength, wavelengths) + offset
+        #
+        intensitiesNearSelected= np.array( intensitiesSpec[startIndex:finishIndex])
+        m = np.mean(intensitiesNearSelected)
+        s = np.std(intensitiesNearSelected)
+        print(f"wv: {selectedWavelength} nm mean: {m} std: {s}")
+        meanIntensities.append(m)
+        stdsIntensities.append(s)
+    print()
+    return meanIntensities, stdsIntensities
+
+
+def ComapreStatisticsOfSelectedWavelengths(spectrumDataList,timesFromLaunchInHours,wavelengths,intensities,selectedWavelengths,unloadedTimeStamp,loadedTimeStamp):
+    """
+
+    Parameters
+    ----------
+    spectrumDataList : list
+        A list with the filePaths of all txt data found.
+        
+    timesFromLaunchInHours : numpy.ndarray
+        Contains the time (in hours) passed since launch for each spectrum.
+    
+    wavelengths : 
+        Contains values from 1st column in spectrum .txt files, 
+        that corresponds to the wavelengths recorded by the optical sensor.
+    
+    intensities : numpy.ndarray (2D)
+        Contains values from 2nd column in the EVERY spectrum .txt file, 
+        that corresponds to the intensity recorded by the optical sensor.
+        Each Row is one spectrum
+    
+    selectedWavelengths : list
+        Contains wavelengths of interest.
+        
+    unloadedTimeStamp : float
+        TimeStamp corresponding to the sample before it is loaded with H2.
+    
+    loadedTimeStamp : float
+        TimeStamp corresponding to the sample before it is loaded with H2.
+    
+
+    Returns
+    -------
+    None.
+
+    """
+    #get statistics from the "unloaded" timestamp 
+    temparr1 = GetIntensitiesAtTimestamp(unloadedTimeStamp,timesFromLaunchInHours,intensities,spectrumDataList)
+    m_un,s_un = GetStatisticsNearSelectedWavelengths(wavelengths,temparr1,selectedWavelengths)
+    
+    #get statistics from the "loaded" timestamp 
+    temparr2 = GetIntensitiesAtTimestamp(loadedTimeStamp  ,timesFromLaunchInHours,intensities,spectrumDataList)
+    m_l,s_l =GetStatisticsNearSelectedWavelengths(wavelengths,temparr2,selectedWavelengths)
+    
+    print(f"Unloaded VS Loaded Sample for Selected Wavelengths")
+    for i in range(len(m_un)):
+        ratio = m_l[i]/m_un[i]
+        lnRatio= -np.log(m_l[i]/m_un[i])
+        
+        #error propagation
+        err_ratio = ratio * np.sqrt( (s_l[i]/m_l[i])**2 +(s_un[i]/m_un[i])**2  )
+        err_lnRatio = err_ratio/ratio
+        print(f"wv: {selectedWavelengths[i]} nm: L/UnL: {ratio }, err {err_ratio}  -ln(I(c)/Io) = { lnRatio } err:{err_lnRatio}")
+    
+    return
+

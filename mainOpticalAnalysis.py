@@ -1,7 +1,8 @@
 import functionsForOpticalData as functs
 import sys
 
-#----User Input Section----
+#=========User Input Section=======
+#========================================================================================================
 #Wavelength region of interest for averaging the recorded intensity
 #The averaged intensity is ploted over time (default code functionality)
 integrStartWav=630    #first wavelength in the region of interest
@@ -19,14 +20,14 @@ selectedWavelengths=[600,700,800,900,1000]
 #      within 0.5nm
 
 #Optional: Choose whether to plot the first spectrum
-plotFirstSpectrum=True
+plotFirstSpectrum=False
 
 #Optional: Choose timestamps to compare intensities on selected wavelengths
 #Functionality aimed on comparing thin films before and after H2 loading
 compareTimestamps=True
 unloadedTimeStamp=1
 loadedTimeStamp  =8.5
-
+#========================================================================================================
 
 #----Functionality Section----
 #Here the user input is passed to the functions of module "functionsForOpticalData"
@@ -44,6 +45,7 @@ launchTime,numberOfPointsInSpectrum,wavelengths,IntensitiesRef = \
 timesFromLaunchInHours,intensities,averageIntensities = \
     functs.ScanFiles(spectrumDataList,numberOfSpectra,numberOfPointsInSpectrum,launchTime,wavelengths,integrStartWav,integrFinishWav,selectedWavelengths)
 
+
 #Plot average intesity vs time since launch of experiment
 functs.plotAverageIntensityOverTime(timesFromLaunchInHours,averageIntensities,integrStartWav,integrFinishWav)
 
@@ -52,4 +54,4 @@ if(plotFirstSpectrum): functs.PlotFirstSpectrum(wavelengths,IntensitiesRef)
 
 #Optional: 
 if(compareTimestamps):    
-    functs.printUnloadedVsLoadedComparison(unloadedTimeStamp,loadedTimeStamp,timesFromLaunchInHours,selectedWavelengths,wavelengths,intensities)
+    functs.ComapreStatisticsOfSelectedWavelengths(spectrumDataList,timesFromLaunchInHours,wavelengths,intensities,selectedWavelengths,unloadedTimeStamp,loadedTimeStamp)
